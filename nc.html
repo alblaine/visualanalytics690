@@ -26,13 +26,28 @@
         var path = d3.geo.path().projection(projection);
         
         function loadData(){
-            d3.json("data/inpatient_data_2012_nc_lat_long.csv", function(error, records){
+            d3.csv("data/inpatient_data_2012_nc_lat_long.csv", function(error, records){
                 if (error) {
                     return console.error(error);
                 }
                 
-                console.log(records.length);
+                records = records.filter(function(d){
+                   return d["DRG Definition"] == "039 - EXTRACRANIAL PROCEDURES W/O CC/MCC";
+                });
+                 
+                var hospital = svg.selectAll(".hospital").data(records);
                 
+               
+                
+                hospital.enter().append("circle")
+                    .attr("class", "hospital")
+                    .attr("r", 3)
+                    .attr("transform", function(d) {
+                        return "translate(" + projection([
+                          d["Provider Longitude"],
+                          d["Provider Latitude"]
+                        ]) + ")"
+                    });
             });
             
         }
