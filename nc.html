@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="utf-8">
+    <title>NC Map example</title>
+    <style>
+    
+    /* CSS goes here. */
+    
+    </style>
+<body>
+
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/topojson.v1.js"></script>
+    <script>
+        var width = 960,
+            height = 1160;
+        
+        var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+    
+        var projection = d3.geo.albersUsa()
+                            .scale(5000)
+                            .translate([-width/1.5, 0]);
+
+        var path = d3.geo.path().projection(projection);
+        
+        function loadData(){
+            d3.json("data/inpatient_data_2012_nc_lat_long.csv", function(error, records){
+                if (error) {
+                    return console.error(error);
+                }
+                
+                console.log(records.length);
+                
+            });
+            
+        }
+        d3.json("nc-counties-topo.json", function(error, states) {
+          if (error) {
+            return console.error(error);
+          }
+          var topo = topojson.feature(states, states.objects.counties).features;
+          
+          var county = svg.selectAll(".county").data(topo);
+          
+          county.enter().insert("path")
+            .attr("class", "county")
+            .attr("id", function(d, i){ return "county" + d.id; })
+            .attr("d", path)
+            .style("stroke", "#000")
+            .style("fill", function(d, i){
+                if (i % 2) {
+                    return "#ccc";
+                } else {
+                    return "#666";
+                }
+            });
+            
+            loadData();
+        });
+        
+
+    </script>
+</body>
+</html>
