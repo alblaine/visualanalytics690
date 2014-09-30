@@ -27,7 +27,7 @@
         //maybe use a different projection to rotate the map appropriately
         var projection = d3.geo.albers()
                             .scale(5000)
-                            .translate([-width/1.5, 0]);
+                            .translate([-width/1.3, 0]);
 
         var path = d3.geo.path().projection(projection);
         
@@ -48,6 +48,7 @@
                 hospital.enter().append("circle")
                     .attr("class", "hospital")
                     .attr("r", 3)
+                    .style("fill", "brown")
                     .attr("transform", function(d) {
                         return "translate(" + projection([
                           d["Provider Longitude"],
@@ -70,15 +71,9 @@
             .attr("id", function(d, i){ return "county" + d.id; })
             .attr("d", path)
             .style("stroke", "#000")
-            .style("fill", function(d, i){
-                if (i % 2) {
-                    return "#ccc";
-                } else {
-                    return "#666";
-                }
-            });
+            .style("fill", "#ccc");
             
-            //loadData();
+            loadData();
         });
         
 
