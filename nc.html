@@ -3,23 +3,29 @@
     <meta charset="utf-8">
     <title>NC Map example</title>
     <style>
-    
-    /* CSS goes here. */
+        #canvas {
+            width:960px;
+            height:800px;
+            margin:0 auto;
+            border:1px solid #ccc;
+        }
     
     </style>
 <body>
-
+    <div id="canvas"></div>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/topojson.v1.js"></script>
     <script>
         var width = 960,
-            height = 1160;
+            height = 800;
         
-        var svg = d3.select("body").append("svg")
+        //don't want to rotate SVG element because then all manipulations will be on an angle
+        var svg = d3.select("#canvas").append("svg")
             .attr("width", width)
             .attr("height", height);
     
-        var projection = d3.geo.albersUsa()
+        //maybe use a different projection to rotate the map appropriately
+        var projection = d3.geo.albers()
                             .scale(5000)
                             .translate([-width/1.5, 0]);
 
@@ -72,7 +78,7 @@
                 }
             });
             
-            loadData();
+            //loadData();
         });
         
 
