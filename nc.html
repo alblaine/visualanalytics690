@@ -81,25 +81,14 @@
                 
                 drgSelect.on("change", function(e){
                     var newDrg = e.target.value;
-                    filteredData = records.filter(function(d){
+                    var filteredRecords = records.filter(function(d){
                         return d["DRG Definition"] == newDrg;
                     });
                     
-                    //console.log(filteredData);
+                    showHospitals(filteredRecords);
                 });
                 
-                hospitals = svg.selectAll(".hospital").data(filteredRecords);
-                
-                hospitals.enter().append("circle")
-                    .attr("class", "hospital")
-                    .attr("r", 3)
-                    .style("fill", "brown")
-                    .attr("transform", function(d) {
-                        return "translate(" + projection([
-                          d["Provider Longitude"],
-                          d["Provider Latitude"]
-                        ]) + ")"
-                    });
+                showHospitals(filteredRecords);
             });
             
         }
@@ -123,6 +112,24 @@
             
             loadData();
         });
+        
+        function showHospitals(hospitals){
+            hospitals = svg.selectAll(".hospital").data(hospitals);
+
+            hospitals.enter().append("circle")
+                .attr("class", "hospital")
+                .attr("r", 3);
+
+            hospitals.attr("transform", function(d) {
+                    return "translate(" + projection([
+                      d["Provider Longitude"],
+                      d["Provider Latitude"]
+                    ]) + ")"
+                })
+                .style("fill", "brown");
+            
+            hospitals.exit().remove();
+        }
         
         function zoomed() {
             //console.log(zoom.translate(), zoom.scale());
