@@ -12,24 +12,47 @@
     
     </style>
 <body>
+    <select id="drg-code"></select>
     <div id="canvas"></div>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/topojson.v1.js"></script>
+    <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
     <script>
         var width = 960,
             height = 800;
+            
+        var x = d3.scale.linear()
+            .domain([0, width])
+            .range([0, width]);
+
+        var y = d3.scale.linear()
+            .domain([0, height])
+            .range([height, 0]);
+    
+        //maybe use a different projection to rotate the map appropriately
+        var projection = d3.geo.albers()
+                            .scale(7780)
+                            .translate([-width * 1.4, 0]);
+
+        var path = d3.geo.path().projection(projection);
+        
+        var zoom = d3.behavior.zoom()
+                    .x(x)
+                    .y(y)
+                    .translate([0, 0])
+                    .scale(1)
+                    .scaleExtent([1, 8])
+                    .on("zoom", zoomed);
         
         //don't want to rotate SVG element because then all manipulations will be on an angle
         var svg = d3.select("#canvas").append("svg")
             .attr("width", width)
-            .attr("height", height);
-    
-        //maybe use a different projection to rotate the map appropriately
-        var projection = d3.geo.albers()
-                            .scale(5000)
-                            .translate([-width/1.3, 0]);
-
-        var path = d3.geo.path().projection(projection);
+            .attr("height", height)
+            .call(zoom);
+        
+        var drgSelect = $('#drg-code');
+        
+        var hospitals;
         
         function loadData(){
             d3.csv("data/inpatient_data_2012_nc_lat_long.csv", function(error, records){
@@ -37,15 +60,36 @@
                     return console.error(error);
                 }
                 
-                records = records.filter(function(d){
-                   return d["DRG Definition"] == "039 - EXTRACRANIAL PROCEDURES W/O CC/MCC";
+                var nestedData = d3.nest().key(function(d){
+                    return d["DRG Definition"];
+                }).entries(records);
+                
+                var keys = nestedData.map(function(d){
+                    return d.key;
                 });
-                 
-                var hospital = svg.selectAll(".hospital").data(records);
                 
-               
+                $(keys).each(function(){
+                    drgSelect.append('<option value="' + this + '">' + this +'</option>')
+                });
                 
-                hospital.enter().append("circle")
+                var firstCondition = keys[0];
+                
+                filteredRecords = records.filter(function(d){
+                   return d["DRG Definition"] == firstCondition;
+                });
+                
+                drgSelect.on("change", function(e){
+                    var newDrg = e.target.value;
+                    filteredData = records.filter(function(d){
+                        return d["DRG Definition"] == newDrg;
+                    });
+                    
+                    //console.log(filteredData);
+                });
+                
+                hospitals = svg.selectAll(".hospital").data(filteredRecords);
+                
+                hospitals.enter().append("circle")
                     .attr("class", "hospital")
                     .attr("r", 3)
                     .style("fill", "brown")
@@ -58,15 +102,18 @@
             });
             
         }
+        
+        var counties;
+        
         d3.json("nc-counties-topo.json", function(error, states) {
           if (error) {
             return console.error(error);
           }
           var topo = topojson.feature(states, states.objects.counties).features;
           
-          var county = svg.selectAll(".county").data(topo);
+          counties = svg.selectAll(".county").data(topo);
           
-          county.enter().insert("path")
+          counties.enter().insert("path")
             .attr("class", "county")
             .attr("id", function(d, i){ return "county" + d.id; })
             .attr("d", path)
@@ -75,6 +122,18 @@
             
             loadData();
         });
+        
+        function zoomed() {
+            //console.log(d3.event.translate);
+            //svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+            counties.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+            //hospitals.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+            hospitals.attr("transform", function(d){
+                var p = projection([d["Provider Longitude"], d["Provider Latitude"]]);
+                //console.log(p);
+                return "translate(" + x(p[0]) + "," + y(p[1]) + ")scale(" + d3.event.scale + ")";
+            });
+        }
         
 
     </script>
