@@ -31,16 +31,17 @@
     
         //maybe use a different projection to rotate the map appropriately
         var projection = d3.geo.albers()
-                            .scale(7780)
-                            .translate([-width * 1.4, 0]);
+                            .scale(7700)
+                            .rotate([91, 1, -6])
+                            .translate([-width * 1.31, 0]);
 
         var path = d3.geo.path().projection(projection);
         
         var zoom = d3.behavior.zoom()
                     .x(x)
                     .y(y)
-                    .translate([0, 0])
-                    .scale(1)
+                    //.translate([0, 0])
+                    //.scale(1)
                     .scaleExtent([1, 8])
                     .on("zoom", zoomed);
         
@@ -124,14 +125,19 @@
         });
         
         function zoomed() {
-            //console.log(d3.event.translate);
+            //console.log(zoom.translate(), zoom.scale());
+            //if (d3.event) {
+                projection
+                    .translate(d3.event.translate)
+                    .scale(d3.event.scale);
+            //}
             //svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
             counties.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
             //hospitals.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
             hospitals.attr("transform", function(d){
                 var p = projection([d["Provider Longitude"], d["Provider Latitude"]]);
                 //console.log(p);
-                return "translate(" + x(p[0]) + "," + y(p[1]) + ")scale(" + d3.event.scale + ")";
+                return "translate(" + p[0] + "," + p[1] + ")";
             });
         }
         
