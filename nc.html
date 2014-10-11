@@ -2,6 +2,7 @@
 <html>
     <meta charset="utf-8">
     <title>NC Map example</title>
+    <link href="css/colorbrewer.css" rel="stylesheet">
     <style>
         #canvas {
             width:960px;
@@ -12,11 +13,13 @@
     
     </style>
 <body>
-    <select id="drg-code"></select>
+    <div id="drg-select"></div>
     <div id="canvas"></div>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/topojson.v1.js"></script>
-    <script src="//code.jquery.com/jquery-2.1.1.min.js"></script>
+    <!--<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>-->
+    <script src="js/colorbrewer.js"></script>
+    <script src="js/fisheye.js"></script>
     <script>
         var width = 960,
             height = 800;
@@ -28,6 +31,7 @@
         var y = d3.scale.linear()
             .domain([0, height])
             .range([height, 0]);
+           
     
         //maybe use a different projection to rotate the map appropriately
         var projection = d3.geo.albers()
@@ -45,14 +49,14 @@
                     .scaleExtent([1, 8])
                     .on("zoom", zoomed);
         
-        //don't want to rotate SVG element because then all manipulations will be on an angle
         var svg = d3.select("#canvas").append("svg")
             .attr("width", width)
             .attr("height", height)
             .call(zoom);
+          
         
-        var drgSelect = $('#drg-code');
-        
+        var colors;
+        var counties;
         var hospitals;
         
         function loadData(){
@@ -61,16 +65,39 @@
                     return console.error(error);
                 }
                 
-                var nestedData = d3.nest().key(function(d){
-                    return d["DRG Definition"];
-                }).entries(records);
+               // console.log(d3.min(averageTotalPayments), d3.max(averageTotalPayments));
+                var nestedByDrgData = d3.nest()
+                    .key(function(d){
+                        return d["DRG Definition"];
+                    })
+                    .key(function(d){
+                        return d["Hospital Referral Region (HRR) Description"]
+                    })
+                    .entries(records);
                 
-                var keys = nestedData.map(function(d){
+                var keys = nestedByDrgData.map(function(d){
                     return d.key;
                 });
                 
-                $(keys).each(function(){
-                    drgSelect.append('<option value="' + this + '">' + this +'</option>')
+                var list = d3.select("#drg-select").append("select");
+                
+                list.selectAll("option")
+                        .data(nestedByDrgData)
+                        .enter()
+                        .append("option")
+                        .attr("value", function(d){ return d.key; })
+                        .text(function(d){ return d.key; })
+                
+                list.on("change", function(d, i){
+                    var newDrg = this.selectedOptions[0].value;
+                    var filteredRecords = records.filter(function(d){
+                        return d["DRG Definition"] == newDrg;
+                    });
+                    zoom.translate([0, 0]);
+                    zoom.scale(1);
+                    resetZoom();
+                    
+                    showHospitals(filteredRecords);                    
                 });
                 
                 var firstCondition = keys[0];
@@ -79,21 +106,17 @@
                    return d["DRG Definition"] == firstCondition;
                 });
                 
-                drgSelect.on("change", function(e){
-                    var newDrg = e.target.value;
-                    var filteredRecords = records.filter(function(d){
-                        return d["DRG Definition"] == newDrg;
-                    });
-                    
-                    showHospitals(filteredRecords);
-                });
-                
                 showHospitals(filteredRecords);
+                
+                /*var nestedByRegionData = d3.nest().key(function(d){
+                   return d["hospital_referral_region"]; 
+                }).entries(nestedByDrgData);*/
+                
+                //console.log(nestedByDrgData);
+                //console.log(nestedByRegionData);
             });
             
-        }
-        
-        var counties;
+        };
         
         d3.json("nc-counties-topo.json", function(error, states) {
           if (error) {
@@ -114,39 +137,74 @@
         });
         
         function showHospitals(hospitals){
+            
+            var averageTotalPayments = hospitals.map(function(d){
+                return +d["Average Covered Charges"];
+            });
+            
+            colors = d3.scale.quantize()
+                .domain([d3.min(averageTotalPayments), d3.max(averageTotalPayments)])
+                .range(colorbrewer.YlOrRd[9]);
+                
             hospitals = svg.selectAll(".hospital").data(hospitals);
 
             hospitals.enter().append("circle")
                 .attr("class", "hospital")
-                .attr("r", 3);
+                .attr("r", 7)                
+				.attr("stroke-width", 1)
+				.attr("stroke", "#000000")
+                /*.attr("transform", function(d){
+                    if (d3.event) {
+                        return "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")";
+                    } else {
+                        return "";
+                    }
+                    
+                })*/
+                .style("opacity", 0.8)
+                .append("svg:title")
+   				.text(function(d) { return d["Provider Name"]; });
 
-            hospitals.attr("transform", function(d) {
-                    return "translate(" + projection([
+            hospitals
+                .attr("cx", function(d){
+                    var p = projection([
                       d["Provider Longitude"],
                       d["Provider Latitude"]
-                    ]) + ")"
+                    ]);
+                    
+                    return p[0];
                 })
-                .style("fill", "brown");
+                .attr("cy", function(d){
+                    var p = projection([
+                      d["Provider Longitude"],
+                      d["Provider Latitude"]
+                    ]);
+                    
+                    return p[1];
+                })
+                .style("fill", function(d){
+                    //console.log(colors(+d["Average Covered Charges"]), +d["Average Covered Charges"]);
+                    return colors(+d["Average Covered Charges"]);
+                });
             
             hospitals.exit().remove();
+            
+            /*for(var i=0; i < hospitals[0].length; i++){
+                console.log(i, hospitals[0][i].cx);
+            }*/
         }
         
         function zoomed() {
-            //console.log(zoom.translate(), zoom.scale());
-            //if (d3.event) {
-                projection
-                    .translate(d3.event.translate)
-                    .scale(d3.event.scale);
-            //}
-            //svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
             counties.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-            //hospitals.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-            hospitals.attr("transform", function(d){
-                var p = projection([d["Provider Longitude"], d["Provider Latitude"]]);
-                //console.log(p);
-                return "translate(" + p[0] + "," + p[1] + ")";
-            });
+            var hospitals = svg.selectAll('.hospital');
+            hospitals.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
         }
+        
+        function resetZoom() {
+            counties.attr("transform", "translate(0, 0)scale(1)");
+            var hospitals = svg.selectAll('.hospital');
+            hospitals.attr("transform", "translate(0, 0)scale(1)");
+        }        
         
 
     </script>
