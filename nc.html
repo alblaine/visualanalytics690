@@ -19,7 +19,7 @@
     <script src="http://d3js.org/topojson.v1.js"></script>
     <!--<script src="//code.jquery.com/jquery-2.1.1.min.js"></script>-->
     <script src="js/colorbrewer.js"></script>
-    <script src="js/fisheye.js"></script>
+    <!--<script src="js/fisheye.js"></script>-->
     <script>
         var width = 960,
             height = 800;
@@ -44,8 +44,8 @@
         var zoom = d3.behavior.zoom()
                     .x(x)
                     .y(y)
-                    //.translate([0, 0])
-                    //.scale(1)
+                    .translate([0, 0])
+                    .scale(1)
                     .scaleExtent([1, 8])
                     .on("zoom", zoomed);
         
@@ -113,7 +113,7 @@
                 }).entries(nestedByDrgData);*/
                 
                 //console.log(nestedByDrgData);
-                //console.log(nestedByRegionData);
+                //console.log(nestedByDrgData);
             });
             
         };
@@ -167,11 +167,12 @@
 
             hospitals
                 .attr("cx", function(d){
+                    
                     var p = projection([
                       d["Provider Longitude"],
                       d["Provider Latitude"]
                     ]);
-                    
+                    console.log(d["Provider Name"], "cx", p[0]);
                     return p[0];
                 })
                 .attr("cy", function(d){
@@ -179,13 +180,16 @@
                       d["Provider Longitude"],
                       d["Provider Latitude"]
                     ]);
+                    console.log(d["Provider Name"], "cy", p[1]);
                     
                     return p[1];
                 })
                 .style("fill", function(d){
                     //console.log(colors(+d["Average Covered Charges"]), +d["Average Covered Charges"]);
                     return colors(+d["Average Covered Charges"]);
-                });
+                })
+                .select("title")
+   				.text(function(d) { return d["Provider Name"]; });
             
             hospitals.exit().remove();
             
