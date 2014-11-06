@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>How much do hospitals charge?</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="http://fonts.googleapis.com/css?family=News+Cycle:400,700" rel="stylesheet" type="text/css">
+        
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/colorbrewer.css" rel="stylesheet">
+    <link href="css/visualization.css" rel="stylesheet" >
+    
+
+    
+   
+</head>
+
+<body>
+    <div class="container">
+        <br>
+        <h1><strong>How much do North Carolina hospitals charge?</strong></h1>
+        <p class="title">How much you pay for procedures may depend on the hospital.</p>
+        <div class="row">
+            <div class="col-md-9">
+                <div class="map-section">
+                    <div class="dropdown" id="drg-select"></div>
+                    <div id="canvas"></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="map-section">
+                    <div class="title"><br><h4>More Information</h4></div>
+                    <br>
+                    <br>
+                    <br>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="http://d3js.org/d3.v3.js"></script>
+    <script src="http://d3js.org/topojson.v1.js"></script>
+    <script src="js/colorbrewer.js"></script>
+    <script src="js/d3-tip.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+</body>
+</html>

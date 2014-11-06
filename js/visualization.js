@@ -1,6 +1,6 @@
 //The width and height of the SVG display
-var width = 960;
-var height = 800;
+var width = 850;
+var height = 500;
 var hospitalDetails = document.getElementById("hospital-details");
 var colors;
 var counties;
@@ -18,8 +18,8 @@ var y = d3.scale.linear()
 //These settings set the NC map to be horizontally "flat", rather than
 //appearing as on a globe
 var projection = d3.geo.albers()
-                    .scale(7700)
-                    .rotate([91, 1, -6])
+                    .scale(6500)
+                    .rotate([91.6, 2, -6])
                     .translate([-width * 1.31, 0]);
 
 var path = d3.geo.path().projection(projection);
@@ -46,6 +46,7 @@ var svg = d3.select("#canvas").append("svg")
     .call(tip);
 
 function showHospitalDetail(d) {
+    console.log("detail: ", args);
     hospitalDetails.innerHTML = d;
 }
 
@@ -92,8 +93,8 @@ function loadData(){
             //Reset the map before showing new points.
             resetZoom();
             
-            //showRegions(filteredRecords);                    
-            showHospitals(filteredRecords);                    
+            showRegions(filteredRecords);                    
+            //showHospitals(filteredRecords);                    
         });
         
         var firstCondition = keys[0];
@@ -102,8 +103,8 @@ function loadData(){
            return d["DRG Definition"] == firstCondition;
         });
         
-        //showRegions(filteredRecords);
-        showHospitals(filteredRecords);
+        showRegions(filteredRecords);
+        //showHospitals(filteredRecords);
     });
     
 };
@@ -153,8 +154,7 @@ function showRegions(hospitalsByRegion){
     hospitals = svg.selectAll(".hospital").data(nestedByDrgData);
 
     hospitals.enter().append("circle")
-        .attr("class", "hospital")
-        .attr("r", function(d){ return d.values["hospital_count"] * 5; })                
+        .attr("class", "hospital")               
         .attr("stroke-width", 1)
         .attr("stroke", "#000000")
         .style("opacity", 0.8)
@@ -162,6 +162,7 @@ function showRegions(hospitalsByRegion){
         .text(function(d) { return d.values["hospital_count"]; });
 
     hospitals
+        .attr("r", function(d){ return d.values["hospital_count"] * 5; }) 
         .attr("cx", function(d){
             var p = projection([
               d.values["average_long"],
@@ -234,6 +235,7 @@ function showHospitals(hospitals){
         })
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide)
+        .on('click', showHospitalDetail)
         .select("title")
         .text(function(d) { return d["Provider Name"]; });
     

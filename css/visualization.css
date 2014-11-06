@@ -1,8 +1,11 @@
 #canvas {
-    width:960px;
-    height:800px;
+    width:850px;
+    height:500px;
     margin:0 auto;
-    border:1px solid #ccc;
+}
+
+.hospital {
+    cursor: pointer;
 }
 
 .d3-tip {
@@ -32,4 +35,37 @@
   margin: -1px 0 0 0;
   top: 100%;
   left: 0;
+}
+
+body {
+
+    font-family: 'News Cycle', sans-serif;
+}
+
+
+h1, h2, .title {
+    text-align: center;
+}
+
+
+.dropdown {
+  padding: .5em;
+  font-family: 'News Cycle', sans-serif;
+}
+
+.map-section{
+    width: 100%;
+    margin: 0 auto; 
+    box-shadow: 4px 4px 4px 4px #888888;
+    border-radius: 5px;
+}
+
+.container {
+    border-radius: 5px; 
+}
+
+.placeholder {
+    text-align: center;
+    margin-top: 10em;
+    font-weight: bold; 
 }
