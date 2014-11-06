@@ -69,3 +69,22 @@ h1, h2, .title {
     margin-top: 10em;
     font-weight: bold; 
 }
+
+#main-map,
+#more-info {
+    float:left;
+}
+
+#main-map {
+    width:850px;
+    margin-right:10px;
+}
+
+#more-info {
+    width:250px;
+    margin-left:10px;
+}
+
+#hospital-details {
+    padding:0 20px 20px;
+}
