@@ -81,10 +81,31 @@ h1, h2, .title {
 }
 
 #more-info {
-    width:250px;
+    width:300px;
     margin-left:10px;
 }
 
 #hospital-details {
     padding:0 20px 20px;
+}
+
+#hospital-details rect {
+    fill: #167DD2;
+}
+
+#hospital-details text {
+    fill: #333;
+    font: 12px sans-serif;
+    text-anchor: middle;
+}
+
+#hospital-details .x-axis path,
+#hospital-details .x-axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+#hospital-details .bar-label {
+    fill: #fff;
 }
