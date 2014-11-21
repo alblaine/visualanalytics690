@@ -43,6 +43,7 @@ String.prototype.toDollars = function(){
 
 
 
+
 //These settings set the NC map to be horizontally "flat", rather than
 //appearing as on a globe
 var projection = d3.geo.albers()
@@ -62,7 +63,7 @@ var zoom = d3.behavior.zoom()
 
 var tip = d3.tip()
         .attr('class', 'd3-tip')
-        //.offset([-10, 0])
+        .offset([-10, 0])
         .html(function(d) {
           return "Average Covered Charges: " + d["Average Covered Charges"].toDollars();
         });
@@ -189,17 +190,6 @@ Total Discharges: "12"
     
     var barWidth = (barChartWidth / data.length) - 10;
     
-    /*var bar = barChart.selectAll("g")
-        .data(data)
-        .enter()
-        .append("g")
-            .attr("transform", function(d, i) { return "translate(" + i * (barWidth + 10) + ",0)"; });
-    
-    bar.append("rect")
-      .attr("y", function(d) { return barChartY(d.value); })
-      .attr("height", function(d) { return barChartHeight - barChartY(d.value); })
-      .attr("width", barWidth - 1);*/
-    
     barChart.selectAll(".bar")
         .data(data)
         .enter()
@@ -268,8 +258,8 @@ function loadData(){
             //Reset the map before showing new points.
             resetZoom();
             
-            showRegions(filteredRecords);                    
-            //showHospitals(filteredRecords);                    
+            //showRegions(filteredRecords);                    
+            showHospitals(filteredRecords);                    
         });
         
         var firstCondition = keys[0];
@@ -383,6 +373,50 @@ function showHospitals(hospitals){
         return +d["Average Covered Charges"];
     });
     
+    var hospitalLocations = hospitals.map(function(d){
+        var p = projection([
+              d["Provider Longitude"],
+              d["Provider Latitude"]
+            ]);
+        return [p[0], p[1]];
+    });
+    
+    
+//console.log("locations", hospitalLocations);
+
+for(var i = 0; i < hospitalLocations.length; i++){
+    var firstLocation = hospitalLocations[i];
+    
+    var firstX = firstLocation[0] - 7;
+    var firstX2 = firstLocation[0] + 7;
+    var firstY = firstLocation[1] - 7;
+    var firstY2 = firstLocation[1] + 7;
+    
+    for(var j = 0; j < hospitalLocations.length; j++){
+        var secondLocation = hospitalLocations[j];
+        
+        if (firstLocation[0] == secondLocation[0]
+            && firstLocation[1] == secondLocation[1]) {
+            //don't evaluate the same location 
+            break;
+        } else {
+            var secondX = secondLocation[0] - 7;
+            var secondX2 = secondLocation[0] + 7;
+            var secondY = secondLocation[1] - 7;
+            var secondY2 = secondLocation[1] + 7;
+            
+            if (secondX > firstX && secondX < firstX2
+            || secondX2 > firstX && secondX2 < firstX2
+            || secondY < firstY && secondY > firstY2
+            || secondY2 < firstY && secondY2 > secondY2) {
+                //console.log("collision")
+            }
+            
+            //console.log(firstX, firstX2, firstY, firstY2);
+        }
+    }
+}
+
     colors = d3.scale.quantize()
         .domain([d3.min(averageTotalPayments), d3.max(averageTotalPayments)])
         .range(colorbrewer.YlOrRd[9]);
@@ -400,7 +434,7 @@ function showHospitals(hospitals){
 
     hospitals
         .attr("cx", function(d){
-            
+console.log(hospitals);            
             var p = projection([
               d["Provider Longitude"],
               d["Provider Latitude"]
@@ -425,6 +459,7 @@ function showHospitals(hospitals){
         .text(function(d) { return d["Provider Name"]; });
     
     hospitals.exit().remove();
+       
 }
 
 function zoomed() {
@@ -460,6 +495,31 @@ function resetZoom() {
     var regionLabels = svg.selectAll(".region-label");
     regionLabels.attr("transform", "translate(0, 0)scale(1)");
 }
+
+function collide(node) {
+  var r = node.radius + 16,
+      nx1 = node.x - r,
+      nx2 = node.x + r,
+      ny1 = node.y - r,
+      ny2 = node.y + r;
+  return function(quad, x1, y1, x2, y2) {
+    if (quad.point && (quad.point !== node)) {
+      var x = node.x - quad.point.x,
+          y = node.y - quad.point.y,
+          l = Math.sqrt(x * x + y * y),
+          r = node.radius + quad.point.radius;
+      if (l < r) {
+        l = (l - r) / l * .5;
+        node.x -= x *= l;
+        node.y -= y *= l;
+        quad.point.x += x;
+        quad.point.y += y;
+      }
+    }
+    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+  };
+}
+
 
 //Loads the topojson for the map. Calls back to load hospital data at the end.
 d3.json("data/nc-counties-topo.json", function(error, states) {
