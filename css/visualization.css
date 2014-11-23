@@ -43,8 +43,13 @@ body {
 }
 
 
-h1, h2, .title {
+h1, h2, h3, h4 {
     text-align: center;
+}
+
+.title {
+    max-width:640px;
+    margin:1em auto; 
 }
 
 
@@ -57,6 +62,7 @@ h1, h2, .title {
     width: 100%;
     margin: 0 auto; 
     box-shadow: 4px 4px 7px 2px #888888;
+    border:1px solid #a6a6a6;
     border-radius: 5px;
 }
 
@@ -68,6 +74,10 @@ h1, h2, .title {
     text-align: center;
     margin-top: 10em;
     font-weight: bold; 
+}
+
+#drg-select label {
+    font-weight:normal;
 }
 
 #drg-select select {

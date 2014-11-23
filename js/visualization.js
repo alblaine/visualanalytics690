@@ -41,9 +41,6 @@ String.prototype.toDollars = function(){
     return "$" + (+this).toFixed(2);    
 };
 
-
-
-
 //These settings set the NC map to be horizontally "flat", rather than
 //appearing as on a globe
 var projection = d3.geo.albers()
@@ -71,6 +68,7 @@ var tip = d3.tip()
 var svg = d3.select("#canvas").append("svg")
     .attr("width", width)
     .attr("height", height)
+    .attr("id", "svgroot")
     .call(zoom)
     .call(tip);
 
@@ -211,8 +209,6 @@ Total Discharges: "12"
         .text(function(d) { return d.value.toDollars(); });
    
     console.log(data);
-        
-    //hospitalDetails.innerHTML = "This hospital: " + hospitalAverageCoveredCharges + "<br />NC Average: " + ncAverageCoveredCharges + "<br />National Average: " + nationalAverageCoveredCharges;
 }
 
 function hideHospitalDetail(d) {
@@ -241,7 +237,10 @@ function loadData(){
         });
         
         //Populate the dropdown with the DRG codes.
-        var list = d3.select("#drg-select").append("select");
+        var list = d3.select("#drg-select")
+                    .append("label")
+                    .text("DRG: ")
+                    .append("select");
         list.selectAll("option")
                 .data(nestedByDrgData)
                 .enter()
@@ -380,43 +379,9 @@ function showHospitals(hospitals){
             ]);
         return [p[0], p[1]];
     });
-    
-    
-//console.log("locations", hospitalLocations);
 
-for(var i = 0; i < hospitalLocations.length; i++){
-    var firstLocation = hospitalLocations[i];
+    var svgroot = document.getElementById("svgroot");
     
-    var firstX = firstLocation[0] - 7;
-    var firstX2 = firstLocation[0] + 7;
-    var firstY = firstLocation[1] - 7;
-    var firstY2 = firstLocation[1] + 7;
-    
-    for(var j = 0; j < hospitalLocations.length; j++){
-        var secondLocation = hospitalLocations[j];
-        
-        if (firstLocation[0] == secondLocation[0]
-            && firstLocation[1] == secondLocation[1]) {
-            //don't evaluate the same location 
-            break;
-        } else {
-            var secondX = secondLocation[0] - 7;
-            var secondX2 = secondLocation[0] + 7;
-            var secondY = secondLocation[1] - 7;
-            var secondY2 = secondLocation[1] + 7;
-            
-            if (secondX > firstX && secondX < firstX2
-            || secondX2 > firstX && secondX2 < firstX2
-            || secondY < firstY && secondY > firstY2
-            || secondY2 < firstY && secondY2 > secondY2) {
-                //console.log("collision")
-            }
-            
-            //console.log(firstX, firstX2, firstY, firstY2);
-        }
-    }
-}
-
     colors = d3.scale.quantize()
         .domain([d3.min(averageTotalPayments), d3.max(averageTotalPayments)])
         .range(colorbrewer.YlOrRd[9]);
@@ -425,6 +390,7 @@ for(var i = 0; i < hospitalLocations.length; i++){
 
     hospitals.enter().append("circle")
         .attr("class", "hospital")
+        .attr("id", function(d){ return d["Provider Name"].toLowerCase().replace(/ /g, "-"); })
         .attr("r", 7)                
         .attr("stroke-width", 1)
         .attr("stroke", "#000000")
@@ -434,7 +400,6 @@ for(var i = 0; i < hospitalLocations.length; i++){
 
     hospitals
         .attr("cx", function(d){
-console.log(hospitals);            
             var p = projection([
               d["Provider Longitude"],
               d["Provider Latitude"]
@@ -459,7 +424,41 @@ console.log(hospitals);
         .text(function(d) { return d["Provider Name"]; });
     
     hospitals.exit().remove();
-       
+    
+    svg.selectAll(".hospital")
+        .attr("cx", function(d, i){
+            var id = d["Provider Name"].toLowerCase().replace(/ /g, "-");
+            var bBoxRect = this.getBBox();
+            var p = projection([
+              d["Provider Longitude"],
+              d["Provider Latitude"]
+            ]);
+            
+            var intersectionList = svgroot.getIntersectionList(bBoxRect, null);
+            for(var key in intersectionList){
+                var item = intersectionList[key];
+                if (typeof item.getAttribute == "function") {
+                    var itemId = intersectionList[key].getAttribute("id");
+                    if (itemId != null && itemId != id) {
+                        //this item is intersecting another item, not just itself
+                        var intersectingBBox = intersectionList[key].getBBox();
+                        var x1 = bBoxRect["x"];
+                        var x2 = intersectingBBox["x"];
+                        
+                        if (x2 > x1) {
+                            p[0] = p[0] - 15;
+                        } else {
+                            p[0] = p[0] + 15;
+                        }
+                        console.log("hit: ", bBoxRect, intersectionList[key].getBBox());
+                        //p[0] = p[0] + moveDistance;
+                    }
+                }
+            }
+            
+            return p[0];            
+        });
+    
 }
 
 function zoomed() {
