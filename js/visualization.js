@@ -62,7 +62,7 @@ var tip = d3.tip()
         .attr('class', 'd3-tip')
         .offset([-10, 0])
         .html(function(d) {
-          return "Average Covered Charges: " + d["Average Covered Charges"].toDollars();
+          return d["Provider Name"] + "<br />Average Covered Charges: " + d["Average Covered Charges"].toDollars();
         });
 
 var svg = d3.select("#canvas").append("svg")
@@ -391,7 +391,7 @@ function showHospitals(hospitals){
     hospitals.enter().append("circle")
         .attr("class", "hospital")
         .attr("id", function(d){ return d["Provider Name"].toLowerCase().replace(/ /g, "-"); })
-        .attr("r", 7)                
+        .attr("r", 9)                
         .attr("stroke-width", 1)
         .attr("stroke", "#000000")
         .style("opacity", 0.8)
@@ -446,9 +446,9 @@ function showHospitals(hospitals){
                         var x2 = intersectingBBox["x"];
                         
                         if (x2 > x1) {
-                            p[0] = p[0] - 15;
+                            p[0] = p[0] - 12;
                         } else {
-                            p[0] = p[0] + 15;
+                            p[0] = p[0] + 12;
                         }
                         console.log("hit: ", bBoxRect, intersectionList[key].getBBox());
                         //p[0] = p[0] + moveDistance;
