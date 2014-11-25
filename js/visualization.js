@@ -7,13 +7,10 @@ var hospitalDetails = document.getElementById("hospital-details");
 
 //Colors will be populated by color brewer for scales
 var colors;
-
 var counties;
 var hospitals;
-var activeRegion = d3.select(null);
-
-var nationalAverages;
-var ncAverages;
+var nationalAverages = null;
+var ncAverages = null;
 
 //Scales are based on the display width and height
 var x = d3.scale.linear()
@@ -41,7 +38,11 @@ String.prototype.toDollars = function(){
     return "$" + (+this).toFixed(2);    
 };
 
-//These settings set the NC map to be horizontally "flat", rather than
+Number.prototype.toPercent = function(){
+    return (this * 100).toFixed(2);  
+};
+
+//This sets the NC map to be horizontally "flat", rather than
 //appearing as on a globe
 var projection = d3.geo.albers()
                     .scale(6500)
@@ -58,6 +59,7 @@ var zoom = d3.behavior.zoom()
             .scaleExtent([1, 8])
             .on("zoom", zoomed);
 
+//The tooltip that appears on hover
 var tip = d3.tip()
         .attr('class', 'd3-tip')
         .offset([-10, 0])
@@ -72,78 +74,14 @@ var svg = d3.select("#canvas").append("svg")
     .call(zoom)
     .call(tip);
 
-function zoomToRegion(d) {
-    if (activeRegion.node() === this){
-        return resetZoomToRegion();    
-    }
-    
-    activeRegion.classed("active", false);
-    activeRegion = d3.select(this).classed("active", true);
-    
-    var bBox = this.getBBox();
-    
-    //var bounds = path.bounds(d);
-    var dx = bBox.width; //bounds[1][0] - bounds[0][0];
-    var dy = bBox.height; //bounds[1][1] - bounds[0][1];
-    var x = bBox.x; //(bounds[0][0] + bounds[1][0]) / 2;
-    var y = bBox.y; //(bounds[0][1] + bounds[1][1]) / 2;
-    var scale = .9 / Math.max(dx / width, dy / height);
-    var translate = [width / 2 - scale * x, height / 2 - scale * y];
-    
-    //[-793.5, -661] 4 should zoom to charlotte
-
-console.log("zoomToRegion", dx, dy, x, y, scale, translate);
-    
-    scale = 4;
-    translate = [-793.5, -661];
-    
-    zoom.translate(translate).scale(scale);
-    
-    /*svg.transition()
-      .duration(750)
-      //.style("stroke-width", 1.5 / scale + "px")
-      .attr("transform", "translate(" + translate + ")scale(" + scale + ")");*/
-    
-}
-
-function resetZoomToRegion() {
-  activeRegion.classed("active", false);
-  activeRegion = d3.select(null);
-
-  resetZoom();
-  /*g.transition()
-      .duration(750)
-      .style("stroke-width", "1.5px")
-      .attr("transform", "");*/
-}
-
 /**
  * When the user clicks or taps on a hospital, the data for that hospital
  * appears in the hospital details DOM element, along with a bar graph to compare
  * NC and National averages with that hospital.
  */
-function showHospitalDetail(d) {
-    console.log("detail: ", d);
-    
+function showHospitalDetail(d) {    
     //Get the hospital information from the clicked item
     var drgDefinition = d["DRG Definition"];
-    /*
-Average Covered Charges: "16355.16667"
-Average Medicare Payments: "5092.583333"
-Average Total Payments: "5863.25"
-DRG Definition: "039 - EXTRACRANIAL PROCEDURES W/O CC/MCC"
-Hospital Referral Region (HRR) Description: "NC - Asheville"
-ID: "5"
-Provider City: "HENDERSONVILLE"
-Provider Id: "340017"
-Provider Latitude: "35.3208531"
-Provider Longitude: "-82.4677383"
-Provider Name: "MARGARET R PARDEE MEMORIAL HOSPITAL"
-Provider State: "NC"
-Provider Street Address: "800 N JUSTICE ST"
-Provider Zip Code: "28791"
-Total Discharges: "12"
-*/
     
     hospitalDetails.innerHTML = "";
     
@@ -153,20 +91,50 @@ Total Discharges: "12"
     
     hospitalDetails.appendChild(title);
     
+    var drgName = document.createElement("div");
+    drgName.className = "drg-name";
+    drgName.innerText = d["DRG Definition"];
+    
+    hospitalDetails.appendChild(drgName);
+    
     //TODO: need runtime check here to ensure data is available due to async call
+    while(nationalAverages == null){
+        //Lazy noop; hold until nationalAverages loads
+    }
+    
     var nationalDataForThisDRG = nationalAverages.filter(function(d){
        return d["DRG Definition"] == drgDefinition; 
     });
+
+    while(ncAverages == null){
+        //Lazy noop; hold until ncAverages loads
+    }
     
     var ncDataForThisDRG = ncAverages.filter(function(d){
        return d["DRG Definition"] == drgDefinition; 
     });
-    
+//ID,DRG Definition,Provider Id,Provider Name,Provider Street Address,Provider City,Provider State,Provider Zip Code,Hospital Referral Region (HRR) Description,Total Discharges,Average Covered Charges,Average Total Payments,Average Medicare Payments,Provider Latitude,Provider Longitude    
     hospitalAverageCoveredCharges = d["Average Covered Charges"];
-    
+    ncAverageCoveredCharges = ncDataForThisDRG[0]["Average Covered Charges"];
     nationalAverageCoveredCharges = nationalDataForThisDRG[0]["Average Covered Charges"];
     
-    ncAverageCoveredCharges = ncDataForThisDRG[0]["Average Covered Charges"];
+    var percentChangeNC = (hospitalAverageCoveredCharges - ncAverageCoveredCharges) / ncAverageCoveredCharges;
+    var percentChangeNCTerm = (percentChangeNC < 0) ? "less" : "more";
+    
+    var percentChangeNational = (hospitalAverageCoveredCharges - nationalAverageCoveredCharges) / nationalAverageCoveredCharges;
+    var percentChangeNationalTerm = (percentChangeNational < 0) ? "less" : "more";
+    
+    var percentChangeNCElement = document.createElement("div");
+    percentChangeNCElement.className = percentChangeNCTerm;
+    percentChangeNCElement.innerText = percentChangeNC.toPercent() + "% " + percentChangeNCTerm + " than NC average";
+    
+    hospitalDetails.appendChild(percentChangeNCElement);
+    
+    var percentChangeNationalElement = document.createElement("div");
+    percentChangeNationalElement.className = percentChangeNationalTerm;
+    percentChangeNationalElement.innerText = percentChangeNational.toPercent() + "% " + percentChangeNationalTerm + " than National average";
+    
+    hospitalDetails.appendChild(percentChangeNationalElement);    
     
     var data = [
       { name: "Hospital", value: hospitalAverageCoveredCharges },
@@ -175,6 +143,7 @@ Total Discharges: "12"
     ];
     
     var barChart = d3.select("#hospital-details").append("svg")
+        .attr("class", "hospital-chart")
         .attr("width", barChartWidth)
         .attr("height", barChartHeight + 30);
     
@@ -207,8 +176,12 @@ Total Discharges: "12"
         .attr("y", function(d) { return barChartY(d.value) + 3; })
         .attr("dy", ".75em")
         .text(function(d) { return d.value.toDollars(); });
-   
-    console.log(data);
+        
+    var extraInfoElement = document.createElement("div");
+    extraInfoElement.className = "extra-info";
+    extraInfoElement.innerHTML = "Total Discharges: " + d["Total Discharges"];
+    
+    hospitalDetails.appendChild(extraInfoElement);
 }
 
 function hideHospitalDetail(d) {
@@ -270,101 +243,7 @@ function loadData(){
         //showRegions(filteredRecords);
         showHospitals(filteredRecords);
     });
-    
 };
-
-function showRegions(hospitalsByRegion){
-    var nestedByDrgData = d3.nest()
-        .key(function(d){
-            return d["Hospital Referral Region (HRR) Description"]
-        })
-        .rollup(function(d){
-            var hospitalNames = "";
-            for(h in d){
-                hospitalNames += d[h]["Provider Name"] + ", "
-            }
-            return {
-                "hospital_count": d.length,
-                "average_covered_charges": d3.sum(d, function(d){ return +d["Average Covered Charges"]; }),
-                "average_lat": d3.mean(d, function(d){ return d["Provider Latitude"]; }),
-                "average_long": d3.mean(d, function(d){ return d["Provider Longitude"]; }),
-                "hospitals": hospitalNames
-            }
-        })
-        .entries(hospitalsByRegion);
-        
-    var averageTotalPayments = nestedByDrgData.map(function(d){
-        return +d.values["average_covered_charges"];
-    });
-    
-    colors = d3.scale.quantize()
-        .domain([d3.min(averageTotalPayments), d3.max(averageTotalPayments)])
-        .range(colorbrewer.YlOrRd[9]);
-        
-    regions = svg.selectAll(".region").data(nestedByDrgData);
-
-    regions.enter().append("circle")
-        //.attr("class", "region")
-        .attr("class", function(d){ return "region " + d.key.toLowerCase().replace(/ /g, ""); })
-        .attr("stroke-width", 1)
-        .attr("stroke", "#000000")
-        .style("opacity", 0.8)
-        
-        //.append("svg:title")
-        //.text(function(d) { return d.values["hospital_count"]; });
-
-    regions
-        .attr("r", function(d){ return d.values["hospital_count"] * 7; }) 
-        .attr("cx", function(d){
-            var p = projection([
-              d.values["average_long"],
-              d.values["average_lat"]
-            ]);
-            return p[0];
-        })
-        .attr("cy", function(d){
-            var p = projection([
-              d.values["average_long"],
-              d.values["average_lat"]
-            ]);
-            
-            return p[1];
-        })
-        .style("fill", function(d){
-            return colors(+d.values["average_covered_charges"]);
-        })
-        .on("click", zoomToRegion)
-        .select("title")
-        .text(function(d) { return d.values["hospital_count"]; });
-            
-    
-    regions.exit().remove();
-    
-    regionLabels = svg.selectAll(".region-label").data(nestedByDrgData);
-    
-    regionLabels.enter()
-        .append("text")
-        .attr("class", function(d){
-            return "region-label region-size-" + d.values["hospital_count"];
-        });
-    
-    regionLabels
-        .attr("transform", function(d) { return "translate(" + projection([
-          d.values["average_long"],
-          d.values["average_lat"]
-        ]) + ")"; })
-        .attr("dy", "0.35em")
-        .attr("dx", "-.35em")
-        .text(function(d){
-            return d.values["hospital_count"];
-        });
-    
-    regionLabels.exit().remove();    
-}
-
-function hideHospitals(){
-    svg.selectAll(".hospital").style("opacity", 0);
-}
 
 function showHospitals(hospitals){
     
@@ -384,7 +263,7 @@ function showHospitals(hospitals){
     
     colors = d3.scale.quantize()
         .domain([d3.min(averageTotalPayments), d3.max(averageTotalPayments)])
-        .range(colorbrewer.YlOrRd[9]);
+        .range(colorbrewer.Blues[9]);
         
     hospitals = svg.selectAll(".hospital").data(hospitals);
 
@@ -394,7 +273,7 @@ function showHospitals(hospitals){
         .attr("r", 9)                
         .attr("stroke-width", 1)
         .attr("stroke", "#000000")
-        .style("opacity", 0.8)
+        .style("opacity", 0)
         .append("svg:title")
         .text(function(d) { return d["Provider Name"]; });
 
@@ -420,10 +299,18 @@ function showHospitals(hospitals){
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide)
         .on('click', showHospitalDetail)
+        .transition()
+            .delay(200)
+            .duration(800)
+            .style("opacity", 0.8)
         .select("title")
         .text(function(d) { return d["Provider Name"]; });
     
-    hospitals.exit().remove();
+    hospitals.exit()
+            .transition()
+                .duration(300)
+				.style("opacity", 0)
+            .remove();
     
     svg.selectAll(".hospital")
         .attr("cx", function(d, i){
@@ -462,7 +349,6 @@ function showHospitals(hospitals){
 }
 
 function zoomed() {
-//console.log(d3.event.translate, d3.event.scale);
     //svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     counties.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
     
@@ -495,31 +381,6 @@ function resetZoom() {
     regionLabels.attr("transform", "translate(0, 0)scale(1)");
 }
 
-function collide(node) {
-  var r = node.radius + 16,
-      nx1 = node.x - r,
-      nx2 = node.x + r,
-      ny1 = node.y - r,
-      ny2 = node.y + r;
-  return function(quad, x1, y1, x2, y2) {
-    if (quad.point && (quad.point !== node)) {
-      var x = node.x - quad.point.x,
-          y = node.y - quad.point.y,
-          l = Math.sqrt(x * x + y * y),
-          r = node.radius + quad.point.radius;
-      if (l < r) {
-        l = (l - r) / l * .5;
-        node.x -= x *= l;
-        node.y -= y *= l;
-        quad.point.x += x;
-        quad.point.y += y;
-      }
-    }
-    return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
-  };
-}
-
-
 //Loads the topojson for the map. Calls back to load hospital data at the end.
 d3.json("data/nc-counties-topo.json", function(error, states) {
   if (error) {
@@ -546,8 +407,6 @@ d3.csv("data/National-Data-By-DRG.csv", function(error, data){
     }
     
     nationalAverages = data;
-    
-    //console.log("National averages loaded", nationalAverages);
 });
 
 
@@ -558,6 +417,4 @@ d3.csv("data/NC-DRG-Summary-Data.csv", function(error, data){
     }
     
     ncAverages = data;
-    
-    //console.log("NC averages loaded", ncAverages);
 });
