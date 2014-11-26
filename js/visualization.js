@@ -11,6 +11,8 @@ var counties;
 var hospitals;
 var nationalAverages = null;
 var ncAverages = null;
+var drgMin = document.getElementById("drg-min");
+var drgMax = document.getElementById("drg-max");
 
 //Scales are based on the display width and height
 var x = d3.scale.linear()
@@ -114,6 +116,7 @@ function showHospitalDetail(d) {
        return d["DRG Definition"] == drgDefinition; 
     });
 //ID,DRG Definition,Provider Id,Provider Name,Provider Street Address,Provider City,Provider State,Provider Zip Code,Hospital Referral Region (HRR) Description,Total Discharges,Average Covered Charges,Average Total Payments,Average Medicare Payments,Provider Latitude,Provider Longitude    
+    console.log(ncAverages, nationalAverages);
     hospitalAverageCoveredCharges = d["Average Covered Charges"];
     ncAverageCoveredCharges = ncDataForThisDRG[0]["Average Covered Charges"];
     nationalAverageCoveredCharges = nationalDataForThisDRG[0]["Average Covered Charges"];
@@ -146,9 +149,9 @@ function showHospitalDetail(d) {
         .attr("class", "hospital-chart")
         .attr("width", barChartWidth)
         .attr("height", barChartHeight + 30);
-    
+        
     barChartX.domain(data.map(function(d) { return d.name; }));
-    barChartY.domain([0, d3.max(data, function(d) { return d.value; })]);
+    barChartY.domain([0, d3.max(data, function(d) { return +d.value; })]);
     
     barChart.append("g")
       .attr("class", "x-axis")
@@ -164,7 +167,7 @@ function showHospitalDetail(d) {
         .attr("class", "bar")
         .attr("x", function(d) { return barChartX(d.name); })
         .attr("y", function(d) { return barChartY(d.value); })
-        .attr("height", function(d) { return barChartHeight - barChartY(d.value); })
+        .attr("height", function(d) { return barChartHeight - barChartY(+d.value); })
         .attr("width", barChartX.rangeBand());
     
     barChart.selectAll(".bar-label")
@@ -182,6 +185,8 @@ function showHospitalDetail(d) {
     extraInfoElement.innerHTML = "Total Discharges: " + d["Total Discharges"];
     
     hospitalDetails.appendChild(extraInfoElement);
+    
+    //standard deviation for this DRG
 }
 
 function hideHospitalDetail(d) {
@@ -259,10 +264,16 @@ function showHospitals(hospitals){
         return [p[0], p[1]];
     });
 
+    var minPayment = d3.min(averageTotalPayments);
+    var maxPayment = d3.max(averageTotalPayments);
+    
+    drgMin.innerText = minPayment.toString().toDollars();
+    drgMax.innerText = maxPayment.toString().toDollars();
+    
     var svgroot = document.getElementById("svgroot");
     
     colors = d3.scale.quantize()
-        .domain([d3.min(averageTotalPayments), d3.max(averageTotalPayments)])
+        .domain([minPayment, maxPayment])
         .range(colorbrewer.Blues[9]);
         
     hospitals = svg.selectAll(".hospital").data(hospitals);
@@ -337,7 +348,7 @@ function showHospitals(hospitals){
                         } else {
                             p[0] = p[0] + 12;
                         }
-                        console.log("hit: ", bBoxRect, intersectionList[key].getBBox());
+                        //console.log("hit: ", bBoxRect, intersectionList[key].getBBox());
                         //p[0] = p[0] + moveDistance;
                     }
                 }

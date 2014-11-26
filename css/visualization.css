@@ -105,7 +105,7 @@ h1, h2, h3, h4 {
 }
 
 #hospital-details rect {
-    fill: #167DD2;
+    fill: #353535;
 }
 
 #hospital-details text {
@@ -135,4 +135,54 @@ h1, h2, h3, h4 {
 
 .hospital-chart {
     margin-top:10px;
+}
+
+.my-legend .legend-title {
+    text-align: right;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 90%;
+    }
+  .my-legend .legend-scale ul {
+    margin: 0;
+    padding: 0;
+    float: right;
+    list-style: none;
+    }
+  .my-legend .legend-scale ul li {
+    display: block;
+    float: left;
+    width: 50px;
+    margin-bottom: 6px;
+    text-align: center;
+    font-size: 80%;
+    list-style: none;
+    border-top:1px solid #ccc;
+    border-bottom:1px solid #ccc;
+    }
+    .my-legend .legend-scale ul li.first-color {
+        border-left:1px solid #ccc;
+    }
+    .my-legend .legend-scale ul li.last-color {
+        border-right:1px solid #ccc;
+    }
+  .my-legend ul.legend-labels li span {
+    display: block;
+    float: left;
+    height: 15px;
+    width: 50px;
+    }
+  .my-legend .legend-source {
+    font-size: 70%;
+    color: #999;
+    clear: both;
+    }
+  .my-legend a {
+    color: #777;
+    }
+    
+#drg-min,
+#drg-max {
+    width:60px;
+    border:none;
 }
