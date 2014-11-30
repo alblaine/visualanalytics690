@@ -289,16 +289,16 @@ function showHospitals(hospitals){
     hospitals = svg.selectAll(".hospital").data(hospitals);
 
     hospitals.enter().append("circle")
-        .attr("class", "hospital")
-        .attr("id", function(d){ return d["Provider Name"].toLowerCase().replace(/ /g, "-"); })
-        .attr("r", 9)                
-        .attr("stroke-width", 1)
-        .attr("stroke", "#000000")
+        .attr("r", 9)              
         //.style("opacity", 0);
         //.append("svg:title")
         //.text(function(d) { return d["Provider Name"]; });
 
-    hospitals
+    hospitals  
+        .attr("stroke-width", 1)
+        .attr("stroke", "#000000")
+        .attr("id", function(d){ return d["Provider Name"].toLowerCase().replace(/ /g, "-"); })
+        .attr("class", "hospital")
         .attr("cx", function(d){
             var p = projection([
               d["Provider Longitude"],
