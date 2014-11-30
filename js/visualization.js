@@ -81,7 +81,17 @@ var svg = d3.select("#canvas").append("svg")
  * appears in the hospital details DOM element, along with a bar graph to compare
  * NC and National averages with that hospital.
  */
-function showHospitalDetail(d) {    
+function showHospitalDetail(d) {
+    d3.select(".active")
+        .attr("stroke-width", 1)
+        .attr("stroke", "#000000")
+        .attr("class", "hospital");
+    
+    d3.select(this)
+        .attr("stroke-width", 2)
+        .attr("stroke", "brown")
+        .attr("class", "hospital active");
+    
     //Get the hospital information from the clicked item
     var drgDefinition = d["DRG Definition"];
     
@@ -116,7 +126,7 @@ function showHospitalDetail(d) {
        return d["DRG Definition"] == drgDefinition; 
     });
 //ID,DRG Definition,Provider Id,Provider Name,Provider Street Address,Provider City,Provider State,Provider Zip Code,Hospital Referral Region (HRR) Description,Total Discharges,Average Covered Charges,Average Total Payments,Average Medicare Payments,Provider Latitude,Provider Longitude    
-    console.log(ncAverages, nationalAverages);
+//console.log(ncAverages, nationalAverages);
     hospitalAverageCoveredCharges = d["Average Covered Charges"];
     ncAverageCoveredCharges = ncDataForThisDRG[0]["Average Covered Charges"];
     nationalAverageCoveredCharges = nationalDataForThisDRG[0]["Average Covered Charges"];
@@ -284,9 +294,9 @@ function showHospitals(hospitals){
         .attr("r", 9)                
         .attr("stroke-width", 1)
         .attr("stroke", "#000000")
-        .style("opacity", 0)
-        .append("svg:title")
-        .text(function(d) { return d["Provider Name"]; });
+        //.style("opacity", 0);
+        //.append("svg:title")
+        //.text(function(d) { return d["Provider Name"]; });
 
     hospitals
         .attr("cx", function(d){
@@ -307,22 +317,23 @@ function showHospitals(hospitals){
         .style("fill", function(d){
             return colors(+d["Average Covered Charges"]);
         })
+        .style("opacity", 0.8)
         .on('mouseover', tip.show)
         .on('mouseout', tip.hide)
         .on('click', showHospitalDetail)
-        .transition()
-            .delay(200)
-            .duration(800)
-            .style("opacity", 0.8)
-        .select("title")
-        .text(function(d) { return d["Provider Name"]; });
+        //.transition()
+        //    .delay(200)
+        //    .duration(800)
+        //    .style("opacity", 0.8);
+        //.select("title")
+        //.text(function(d) { return d["Provider Name"]; });
     
     hospitals.exit()
-            .transition()
-                .duration(300)
-				.style("opacity", 0)
+            //.transition()
+            //    .duration(300)
+			//	.style("opacity", 0)
             .remove();
-    
+    //return;
     svg.selectAll(".hospital")
         .attr("cx", function(d, i){
             var id = d["Provider Name"].toLowerCase().replace(/ /g, "-");
