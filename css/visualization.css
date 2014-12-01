@@ -2,6 +2,10 @@ body {
     font-family: 'News Cycle', sans-serif;
 }
 
+body .container {
+    min-width:1170px; /* prevent responsive resizing for demo */
+}
+
 #canvas {
     width:850px;
     height:500px;
