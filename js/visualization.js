@@ -290,9 +290,7 @@ function showHospitals(hospitals){
 
     hospitals.enter().append("circle")
         .attr("r", 9)              
-        //.style("opacity", 0);
-        //.append("svg:title")
-        //.text(function(d) { return d["Provider Name"]; });
+        .style("opacity", 0);
 
     hospitals  
         .attr("stroke-width", 1)
@@ -304,6 +302,7 @@ function showHospitals(hospitals){
               d["Provider Longitude"],
               d["Provider Latitude"]
             ]);
+            
             return p[0];
         })
         .attr("cy", function(d){
@@ -325,8 +324,6 @@ function showHospitals(hospitals){
         //    .delay(200)
         //    .duration(800)
         //    .style("opacity", 0.8);
-        //.select("title")
-        //.text(function(d) { return d["Provider Name"]; });
     
     hospitals.exit()
             //.transition()
@@ -335,6 +332,8 @@ function showHospitals(hospitals){
             .remove();
     //return;
     svg.selectAll(".hospital")
+        //.transition()
+        //.delay(900)
         .attr("cx", function(d, i){
             var id = d["Provider Name"].toLowerCase().replace(/ /g, "-");
             var bBoxRect = this.getBBox();
